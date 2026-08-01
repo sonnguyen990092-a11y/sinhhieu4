@@ -287,13 +287,13 @@ function renderList(filter){
     return;
   }
   list.innerHTML = entries.map(e => `
-    <div class="entry" data-key="${e.ts}">
+    <div class="entry" data-key="${e.id}">
       <div class="entry-top">
         <div>
           <span class="code">Mã ${e.code}</span>
           <span class="date"> · ${e.date ?? ''}</span>
         </div>
-        <button type="button" class="del" aria-label="Xóa" data-key="${e.ts}">✕</button>
+        <button type="button" class="del" aria-label="Xóa" data-key="${e.id}">✕</button>
       </div>
       <div class="entry-grid">
         <div><span>Chiều cao</span><b>${e.height ?? '–'} cm</b></div>
@@ -307,16 +307,21 @@ function renderList(filter){
       </div>
     </div>
   `).join('');
+
   list.querySelectorAll('.del').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!confirm('Xóa phiếu này?')) return;
       try{
-        const res = await fetch(`${API}?ts=${btn.dataset.key}`, {
+        const res = await fetch(API, {
           method: 'DELETE',
-          headers: { Authorization: authHeader }
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader
+          },
+          body: JSON.stringify({ id: btn.dataset.key })
         });
         if(!res.ok) throw new Error('delete failed');
-        allEntries = allEntries.filter(e => String(e.ts) !== btn.dataset.key);
+        allEntries = allEntries.filter(e => e.id !== btn.dataset.key);
         renderAll();
         showToast('Đã xóa phiếu');
       }catch(e){
@@ -346,7 +351,7 @@ $('exportBtn').addEventListener('click', () => {
   XLSX.writeFile(wb, 'chi-so-suc-khoe.xlsx');
 });
 
-// auto-login if session already authenticated in this tab
+// auto-login
 (async function init(){
   const saved = sessionStorage.getItem('adminAuth');
   if(saved){
