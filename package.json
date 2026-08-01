@@ -1,7 +1,8 @@
 {
-  "name": "health-entry-app",
+  "name": "health-vitals-app",
   "version": "1.0.0",
   "private": true,
+  "description": "Ung dung nhap va luu chi so suc khoe - deploy tren Netlify",
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
   }
