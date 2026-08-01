@@ -5,7 +5,7 @@ const STORE_NAME = "health-vitals-records";
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
 };
 
@@ -14,6 +14,21 @@ function respond(status, body) {
     status,
     headers: JSON_HEADERS,
   });
+}
+
+function checkAuth(req) {
+  const auth = req.headers.get("authorization") || "";
+  if (!auth.startsWith("Basic ")) return false;
+
+  try {
+    const decoded = atob(auth.slice(6));
+    const [user, pass] = decoded.split(":");
+    const adminUser = Deno.env.get("ADMIN_USER") || "admin";
+    const adminPass = Deno.env.get("ADMIN_PASS") || "duc123";
+    return user === adminUser && pass === adminPass;
+  } catch {
+    return false;
+  }
 }
 
 function validate(payload) {
@@ -27,12 +42,12 @@ function validate(payload) {
   const numericFields = [
     ["height", "Chiều cao"],
     ["weightNow", "Cân nặng hiện tại"],
-    ["weightLastYear", "Cân nặng 1 năm trước"],
+    ["weightPrev", "Cân nặng 1 năm trước"],
     ["waist", "Vòng bụng"],
     ["pulse", "Mạch"],
-    ["bpSystolic", "Huyết áp tâm thu"],
-    ["bpDiastolic", "Huyết áp tâm trương"],
-    ["respRate", "Nhịp thở"],
+    ["bpSys", "Huyết áp tâm thu"],
+    ["bpDia", "Huyết áp tâm trương"],
+    ["resp", "Nhịp thở"],
   ];
 
   for (const [key, label] of numericFields) {
@@ -46,7 +61,6 @@ function validate(payload) {
 }
 
 export default async (req) => {
-  // Xử lý preflight CORS
   if (req.method === "OPTIONS") {
     return respond(200, {});
   }
@@ -54,15 +68,21 @@ export default async (req) => {
   const store = getStore(STORE_NAME);
 
   try {
+    // ========== GET (cần đăng nhập) ==========
     if (req.method === "GET") {
+      if (!checkAuth(req)) {
+        return respond(401, { errors: ["Unauthorized"] });
+      }
+
       const { blobs } = await store.list();
       const records = await Promise.all(
         blobs.map((b) => store.get(b.key, { type: "json" }))
       );
       records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      return respond(200, { records });
+      return respond(200, records); // trả về mảng trực tiếp
     }
 
+    // ========== POST (không cần đăng nhập) ==========
     if (req.method === "POST") {
       const payload = await req.json();
       const errors = validate(payload);
@@ -74,14 +94,15 @@ export default async (req) => {
       const record = {
         id,
         code: String(payload.code).trim(),
+        date: payload.date || new Date().toISOString().slice(0, 10),
         height: Number(payload.height),
         weightNow: Number(payload.weightNow),
-        weightLastYear: Number(payload.weightLastYear),
+        weightPrev: Number(payload.weightPrev),
         waist: Number(payload.waist),
         pulse: Number(payload.pulse),
-        bpSystolic: Number(payload.bpSystolic),
-        bpDiastolic: Number(payload.bpDiastolic),
-        respRate: Number(payload.respRate),
+        bpSys: Number(payload.bpSys),
+        bpDia: Number(payload.bpDia),
+        resp: Number(payload.resp),
         createdAt: new Date().toISOString(),
       };
 
@@ -89,9 +110,30 @@ export default async (req) => {
       return respond(200, { record });
     }
 
+    // ========== DELETE (cần đăng nhập) ==========
     if (req.method === "DELETE") {
-      const { id } = await req.json();
-      if (!id) return respond(400, { errors: ["Thiếu id bản ghi cần xoá."] });
+      if (!checkAuth(req)) {
+        return respond(401, { errors: ["Unauthorized"] });
+      }
+
+      let id = null;
+
+      // Ưu tiên lấy từ body
+      try {
+        const body = await req.json();
+        id = body.id || body.ts;
+      } catch {}
+
+      // Nếu không có body thì lấy từ query string
+      if (!id) {
+        const url = new URL(req.url);
+        id = url.searchParams.get("id") || url.searchParams.get("ts");
+      }
+
+      if (!id) {
+        return respond(400, { errors: ["Thiếu id bản ghi cần xoá."] });
+      }
+
       await store.delete(id);
       return respond(200, { success: true });
     }
