@@ -2,6 +2,10 @@ import { getStore } from "@netlify/blobs";
 
 const STORE_NAME = "health-vitals-records";
 
+// Tài khoản admin mặc định (đổi tại đây nếu muốn)
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "duc123";
+
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
@@ -23,9 +27,7 @@ function checkAuth(req) {
   try {
     const decoded = atob(auth.slice(6));
     const [user, pass] = decoded.split(":");
-    const adminUser = Deno.env.get("ADMIN_USER") || "admin";
-    const adminPass = Deno.env.get("ADMIN_PASS") || "duc123";
-    return user === adminUser && pass === adminPass;
+    return user === ADMIN_USER && pass === ADMIN_PASS;
   } catch {
     return false;
   }
@@ -79,7 +81,7 @@ export default async (req) => {
         blobs.map((b) => store.get(b.key, { type: "json" }))
       );
       records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      return respond(200, records); // trả về mảng trực tiếp
+      return respond(200, records);
     }
 
     // ========== POST (không cần đăng nhập) ==========
@@ -118,13 +120,11 @@ export default async (req) => {
 
       let id = null;
 
-      // Ưu tiên lấy từ body
       try {
         const body = await req.json();
         id = body.id || body.ts;
       } catch {}
 
-      // Nếu không có body thì lấy từ query string
       if (!id) {
         const url = new URL(req.url);
         id = url.searchParams.get("id") || url.searchParams.get("ts");
