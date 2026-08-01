@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Quản trị · Chỉ số sức khỏe</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F7F5;
+    --card:#FFFFFF;
+    --ink:#16261F;
+    --ink-soft:#5B6B62;
+    --primary:#1C6E5C;
+    --primary-dark:#114A3D;
+    --primary-tint:#E4F2ED;
+    --line:#DCE6E1;
+    --ok:#2E7D46;
+    --ok-tint:#E5F3E8;
+    --warn:#B9791A;
+    --warn-tint:#FBF0DD;
+    --bad:#B23A2E;
+    --bad-tint:#FBE7E4;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    -webkit-tap-highlight-color:transparent;
+    padding-bottom:48px;
+    min-height:100vh;
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:var(--primary-dark);
+    color:#fff;
+    padding:18px 20px 16px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  header h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 2px;
+    letter-spacing:0.2px;
+  }
+  header p{margin:0;font-size:13px;color:#BFE0D3;}
+  header button{
+    background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);
+    color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:20px;
+    cursor:pointer;font-family:'Inter',sans-serif;
+  }
+
+  main{max-width:520px;margin:0 auto;padding:16px;}
+
+  /* login */
+  .login-wrap{
+    min-height:80vh;display:flex;align-items:center;justify-content:center;padding:16px;
+  }
+  .login-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 24px;max-width:360px;width:100%;
+  }
+  .login-card .lock{
+    width:44px;height:44px;border-radius:12px;background:var(--primary-tint);
+    display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+    font-size:20px;
+  }
+  .login-card h2{
+    font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin:0 0 4px;
+  }
+  .login-card p.sub{font-size:13px;color:var(--ink-soft);margin:0 0 18px;}
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block;font-size:13px;font-weight:500;color:var(--ink-soft);margin-bottom:6px;}
+  .field input{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;
+    font-size:16px;font-family:'Inter',sans-serif;color:var(--ink);background:#FBFCFB;
+  }
+  .field input:focus{outline:none;border-color:var(--primary);background:#fff;}
+  button.primary{
+    width:100%;background:var(--primary);color:#fff;border:none;border-radius:12px;
+    padding:14px;font-size:15.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;
+    cursor:pointer;margin-top:6px;
+  }
+  button.primary:disabled{background:#B6C7C0;cursor:not-allowed;}
+  .login-err{color:var(--bad);font-size:13px;margin-top:12px;display:none;}
+  .login-err.show{display:block;}
+
+  /* dashboard */
+  .toolbar{
+    display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;
+  }
+  .stat{
+    flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;
+  }
+  .stat .n{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--primary-dark);}
+  .stat .l{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+
+  .actions{display:flex;gap:10px;margin-bottom:16px;}
+  .actions button{
+    flex:1;border-radius:12px;padding:12px;font-size:14px;font-weight:600;
+    font-family:'Space Grotesk',sans-serif;cursor:pointer;border:none;
+  }
+  #exportBtn{background:var(--primary);color:#fff;}
+  #refreshBtn{background:var(--card);color:var(--primary-dark);border:1.5px solid var(--line) !important;}
+
+  .search{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;
+    font-size:15px;font-family:'Inter',sans-serif;margin-bottom:14px;background:#fff;
+  }
+  .search:focus{outline:none;border-color:var(--primary);}
+
+  .entry{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:13px 14px;margin-bottom:8px;
+  }
+  .entry-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .entry .code{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;color:var(--primary-dark);}
+  .entry .date{font-size:12px;color:var(--ink-soft);}
+  .entry .del{
+    background:none;border:none;color:#B0685F;font-size:17px;cursor:pointer;padding:4px 6px;line-height:1;
+  }
+  .entry-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;margin-top:10px;
+    font-size:12.5px;
+  }
+  .entry-grid div span{display:block;color:var(--ink-soft);font-size:11px;}
+  .entry-grid div b{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+
+  .empty{text-align:center;color:#8B978F;font-size:13.5px;padding:32px 10px;}
+  .loading{text-align:center;color:#8B978F;font-size:13.5px;padding:32px 10px;}
+
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:var(--primary-dark);color:#fff;padding:11px 20px;border-radius:30px;
+    font-size:14px;font-weight:500;opacity:0;transition:opacity .2s, transform .2s;
+    pointer-events:none;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="lock">🔒</div>
+    <h2>Đăng nhập quản trị</h2>
+    <p class="sub">Nhập tài khoản để xem và quản lý danh sách phiếu đã nhập.</p>
+    <form id="loginForm">
+      <div class="field">
+        <label for="user">Tài khoản</label>
+        <input type="text" id="user" autocomplete="username" placeholder="admin">
+      </div>
+      <div class="field">
+        <label for="pass">Mật khẩu</label>
+        <input type="password" id="pass" autocomplete="current-password" placeholder="••••••">
+      </div>
+      <button type="submit" class="primary" id="loginBtn">Đăng nhập</button>
+      <p class="login-err" id="loginErr">Sai tài khoản hoặc mật khẩu.</p>
+    </form>
+  </div>
+</div>
+
+<div id="dashView" style="display:none;">
+  <header>
+    <div>
+      <h1>Quản trị danh sách</h1>
+      <p>Chỉ số sức khỏe đã nhập</p>
+    </div>
+    <button id="logoutBtn">Đăng xuất</button>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div class="stat"><div class="n" id="totalCount">0</div><div class="l">Tổng số phiếu</div></div>
+      <div class="stat"><div class="n" id="todayCount">0</div><div class="l">Nhập hôm nay</div></div>
+    </div>
+
+    <div class="actions">
+      <button id="exportBtn">Xuất Excel</button>
+      <button id="refreshBtn">Làm mới</button>
+    </div>
+
+    <input type="text" class="search" id="search" placeholder="Tìm theo mã code...">
+
+    <div id="list"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast">Đã lưu</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const API = '/api/entries';
+let authHeader = '';
+let allEntries = [];
+
+function showToast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function todayStr(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+async function tryLogin(username, password){
+  authHeader = 'Basic ' + btoa(username + ':' + password);
+  const res = await fetch(API, { headers: { Authorization: authHeader } });
+  if(!res.ok){
+    authHeader = '';
+    return false;
+  }
+  allEntries = await res.json();
+  return true;
+}
+
+$('loginForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = $('loginBtn');
+  btn.disabled = true;
+  $('loginErr').classList.remove('show');
+  const ok = await tryLogin($('user').value.trim(), $('pass').value);
+  btn.disabled = false;
+  if(!ok){
+    $('loginErr').classList.add('show');
+    return;
+  }
+  sessionStorage.setItem('adminAuth', authHeader);
+  $('loginView').style.display = 'none';
+  $('dashView').style.display = 'block';
+  renderAll();
+});
+
+$('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('adminAuth');
+  authHeader = '';
+  allEntries = [];
+  $('dashView').style.display = 'none';
+  $('loginView').style.display = 'flex';
+  $('user').value = '';
+  $('pass').value = '';
+});
+
+async function loadEntries(){
+  try{
+    const res = await fetch(API, { headers: { Authorization: authHeader } });
+    if(res.status === 401){
+      showToast('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại');
+      $('logoutBtn').click();
+      return [];
+    }
+    if(!res.ok) throw new Error('fetch failed');
+    return await res.json();
+  }catch(e){
+    return [];
+  }
+}
+
+function renderAll(){
+  $('totalCount').textContent = allEntries.length;
+  $('todayCount').textContent = allEntries.filter(e => e.date === todayStr()).length;
+  renderList($('search').value.trim());
+}
+
+function renderList(filter){
+  const list = $('list');
+  let entries = allEntries;
+  if(filter){
+    entries = entries.filter(e => (e.code || '').includes(filter));
+  }
+  if(entries.length === 0){
+    list.innerHTML = '<div class="empty">Không có phiếu nào phù hợp.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => `
+    <div class="entry" data-key="${e.ts}">
+      <div class="entry-top">
+        <div>
+          <span class="code">Mã ${e.code}</span>
+          <span class="date"> · ${e.date ?? ''}</span>
+        </div>
+        <button type="button" class="del" aria-label="Xóa" data-key="${e.ts}">✕</button>
+      </div>
+      <div class="entry-grid">
+        <div><span>Chiều cao</span><b>${e.height ?? '–'} cm</b></div>
+        <div><span>Cân nặng nay</span><b>${e.weightNow ?? '–'} kg</b></div>
+        <div><span>Cân nặng năm trước</span><b>${e.weightPrev ?? '–'} kg</b></div>
+        <div><span>Vòng bụng</span><b>${e.waist ?? '–'} cm</b></div>
+        <div><span>Mạch</span><b>${e.pulse ?? '–'} l/ph</b></div>
+        <div><span>Nhịp thở</span><b>${e.resp ?? '–'} l/ph</b></div>
+        <div><span>HA tâm thu</span><b>${e.bpSys ?? '–'}</b></div>
+        <div><span>HA tâm trương</span><b>${e.bpDia ?? '–'}</b></div>
+      </div>
+    </div>
+  `).join('');
+  list.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!confirm('Xóa phiếu này?')) return;
+      try{
+        const res = await fetch(`${API}?ts=${btn.dataset.key}`, {
+          method: 'DELETE',
+          headers: { Authorization: authHeader }
+        });
+        if(!res.ok) throw new Error('delete failed');
+        allEntries = allEntries.filter(e => String(e.ts) !== btn.dataset.key);
+        renderAll();
+        showToast('Đã xóa phiếu');
+      }catch(e){
+        showToast('Lỗi khi xóa, thử lại');
+      }
+    });
+  });
+}
+
+$('search').addEventListener('input', () => renderList($('search').value.trim()));
+
+$('refreshBtn').addEventListener('click', async () => {
+  allEntries = await loadEntries();
+  renderAll();
+  showToast('Đã cập nhật danh sách');
+});
+
+$('exportBtn').addEventListener('click', () => {
+  if(typeof XLSX === 'undefined'){ showToast('Không tải được thư viện Excel, thử lại'); return; }
+  if(allEntries.length === 0){ showToast('Chưa có dữ liệu để xuất'); return; }
+  const headers = ['Mã code','Ngày nhập','Chiều cao (cm)','Cân nặng hiện tại (kg)','Cân nặng 1 năm trước (kg)','Vòng bụng (cm)','Mạch (l/ph)','Nhịp thở (l/ph)','HA tâm thu (mmHg)','HA tâm trương (mmHg)'];
+  const rows = allEntries.map(e => [e.code, e.date ?? '', e.height, e.weightNow, e.weightPrev, e.waist, e.pulse, e.resp, e.bpSys, e.bpDia]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = headers.map(h => ({ wch: Math.max(12, h.length) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Chi so');
+  XLSX.writeFile(wb, 'chi-so-suc-khoe.xlsx');
+});
+
+// auto-login if session already authenticated in this tab
+(async function init(){
+  const saved = sessionStorage.getItem('adminAuth');
+  if(saved){
+    authHeader = saved;
+    const res = await fetch(API, { headers: { Authorization: authHeader } });
+    if(res.ok){
+      allEntries = await res.json();
+      $('loginView').style.display = 'none';
+      $('dashView').style.display = 'block';
+      renderAll();
+      return;
+    }
+    sessionStorage.removeItem('adminAuth');
+  }
+})();
+</script>
+
+</body>
+</html>
