@@ -186,6 +186,125 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
+
+<style>
+  /* ===== Scoped styles for the data-merge tools (namespaced under .mergebox) ===== */
+  .mergebox{
+    --bg: #eef1ee;
+    --panel: #ffffff;
+    --ink: #10201c;
+    --ink-soft: #4c5c57;
+    --line: #d7ddd7;
+    --teal: #0d5c52;
+    --teal-deep: #073a34;
+    --amber: #c9891a;
+    --amber-bg: #fbf1de;
+    --red: #b3402f;
+    --red-bg: #fbeae6;
+    --green-bg: #e7f2ea;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --disp: 'Space Grotesk', ui-sans-serif, sans-serif;
+    --body: 'Inter', ui-sans-serif, sans-serif;
+    display:block; background:var(--bg); color:var(--ink); font-family:var(--body); line-height:1.45;
+  }
+  .mergebox .wrap{max-width:1180px; margin:0 auto; padding:24px 20px 60px;}
+  .mergebox section.block{margin-bottom:56px;}
+  .mergebox .section-title{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .mergebox .section-num{
+    font-family:var(--mono); font-size:12px; font-weight:600; color:#fff; background:var(--teal-deep);
+    border-radius:7px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .mergebox .section-title h2{font-family:var(--disp); font-size:18px; margin:0; color:var(--teal-deep);}
+  .mergebox .section-desc{font-size:13px; color:var(--ink-soft); margin:0 0 20px 38px;}
+
+  .mergebox .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px;}
+  @media (max-width:760px){ .mergebox .grid-2{grid-template-columns:1fr;} }
+  .mergebox .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px;
+    position:relative; overflow:hidden;
+  }
+  .mergebox .card .idx{
+    font-family:var(--mono); font-size:11px; color:var(--teal); letter-spacing:.08em;
+    text-transform:uppercase; margin-bottom:4px; display:block;
+  }
+  .mergebox .card h3{font-family:var(--disp); font-size:16px; margin:0 0 4px;}
+  .mergebox .card p.hint{font-size:12.5px; color:var(--ink-soft); margin:0 0 14px;}
+  .mergebox .drop{
+    border:1.5px dashed var(--line); border-radius:10px; padding:18px; text-align:center;
+    cursor:pointer; transition:border-color .15s, background .15s; background:#fafbfa; display:block;
+  }
+  .mergebox .drop:hover{border-color:var(--teal); background:#f2f7f5;}
+  .mergebox .drop.has-file{border-style:solid; border-color:var(--teal); background:var(--green-bg);}
+  .mergebox .drop input{display:none;}
+  .mergebox .drop .fname{font-family:var(--mono); font-size:12.5px; color:var(--teal-deep); word-break:break-all;}
+  .mergebox .drop .cta{font-size:12.5px; color:var(--ink-soft);}
+  .mergebox .drop .cta b{color:var(--teal); font-weight:600;}
+  .mergebox .meta-line{margin-top:10px; font-size:12px; color:var(--ink-soft); font-family:var(--mono); min-height:16px;}
+
+  .mergebox .action-row{display:flex; align-items:center; gap:14px; margin:22px 0 8px; flex-wrap:wrap;}
+  .mergebox button.primary{
+    font-family:var(--body); font-weight:600; font-size:14px; color:#fff; background:var(--teal-deep);
+    border:none; border-radius:9px; padding:12px 20px; cursor:pointer; display:flex; align-items:center; gap:10px;
+    transition:transform .12s ease, background .15s;
+  }
+  .mergebox button.primary:disabled{background:#aab6b1; cursor:not-allowed;}
+  .mergebox button.primary:not(:disabled):hover{background:var(--teal); transform:translateY(-1px);}
+  .mergebox button.ghost{
+    font-family:var(--body); font-weight:600; font-size:13px; color:var(--teal-deep); background:transparent;
+    border:1px solid var(--line); border-radius:9px; padding:11px 16px; cursor:pointer;
+  }
+  .mergebox button.ghost:hover{border-color:var(--teal);}
+  .mergebox .scan-line{width:26px; height:14px; position:relative; overflow:hidden; display:inline-block;}
+  .mergebox .scan-line span{position:absolute; top:0; bottom:0; width:2px; background:#fff; opacity:.85;}
+  .mergebox .scan-line span:nth-child(1){left:2px;} .mergebox .scan-line span:nth-child(2){left:8px;}
+  .mergebox .scan-line span:nth-child(3){left:13px;} .mergebox .scan-line span:nth-child(4){left:20px;}
+
+  .mergebox .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:22px 0;}
+  @media (max-width:760px){ .mergebox .stats{grid-template-columns:repeat(2,1fr);} }
+  .mergebox .stat{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px;}
+  .mergebox .stat .n{font-family:var(--disp); font-size:26px; font-weight:700; color:var(--teal-deep);}
+  .mergebox .stat .l{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+  .mergebox .stat.warn .n{color:var(--amber);}
+  .mergebox .stat.bad .n{color:var(--red);}
+
+  .mergebox .tabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .mergebox .tab{
+    font-family:var(--body); font-weight:600; font-size:13.5px; padding:10px 16px; cursor:pointer;
+    color:var(--ink-soft); border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .mergebox .tab.active{color:var(--teal-deep); border-bottom-color:var(--teal-deep);}
+  .mergebox .tab .count{font-family:var(--mono); font-size:11px; background:var(--bg); padding:1px 7px; border-radius:10px; margin-left:6px;}
+
+  .mergebox .table-scroll{overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--panel); max-height:560px;}
+  .mergebox table{border-collapse:collapse; width:100%; font-size:12.5px;}
+  .mergebox thead th{
+    position:sticky; top:0; background:var(--teal-deep); color:#fff; text-align:left; padding:9px 10px;
+    font-family:var(--body); font-weight:600; font-size:11.5px; letter-spacing:.02em; white-space:nowrap;
+    z-index:2;
+  }
+  .mergebox tbody td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--ink);}
+  .mergebox tbody tr:hover td{background:#f6f8f6;}
+  .mergebox td.barcode, .mergebox .mono{font-family:var(--mono); font-weight:500;}
+  .mergebox tr.dup td{background:var(--red-bg);}
+  .mergebox tr.dup:hover td{background:#f6dcd6;}
+  .mergebox tr.only-a td, .mergebox tr.only-b td{background:var(--amber-bg);}
+  .mergebox tr.only-a:hover td, .mergebox tr.only-b:hover td{background:#f5e6c4;}
+  .mergebox .badge{
+    font-family:var(--mono); font-size:10.5px; padding:2px 8px; border-radius:20px; white-space:nowrap;
+    display:inline-block; font-weight:500;
+  }
+  .mergebox .badge.ok{background:var(--green-bg); color:var(--teal-deep);}
+  .mergebox .badge.warn{background:var(--amber-bg); color:var(--amber);}
+  .mergebox .badge.bad{background:var(--red-bg); color:var(--red);}
+  .mergebox .empty{padding:50px 20px; text-align:center; color:var(--ink-soft); font-size:13.5px;}
+  .mergebox .legend{display:flex; gap:18px; font-size:12px; color:var(--ink-soft); margin:10px 2px 0; flex-wrap:wrap;}
+  .mergebox .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .mergebox .legend i{width:11px; height:11px; border-radius:3px; display:inline-block;}
+  .mergebox .legend i.dup{background:var(--red-bg); border:1px solid var(--red);}
+  .mergebox .legend i.mismatch{background:var(--amber-bg); border:1px solid var(--amber);}
+  .mergebox .divider{border:none; border-top:1px dashed var(--line); margin:0 0 46px;}
+  .mergebox .col-note{font-size:11.5px; color:var(--ink-soft); margin:8px 2px 0;}
+</style>
 </head>
 <body>
 
@@ -247,6 +366,123 @@
     <div id="list"></div>
     <div class="pagination" id="pagination"></div>
   </main>
+
+  <div class="list-header" style="max-width:520px;margin:8px auto 0;padding:0 16px;">
+    <h2>Công cụ ghép dữ liệu file</h2>
+  </div>
+
+  <div class="mergebox">
+    <div class="wrap">
+
+      <!-- ============ MỤC 1: GHÉP THEO MÃ BARCODE ============ -->
+      <section class="block">
+        <div class="section-title"><span class="section-num">1</span><h2>Ghép theo mã Barcode</h2></div>
+        <p class="section-desc">Đối chiếu file sinh hiệu và file chi tiết xét nghiệm bằng mã barcode chung giữa 2 file.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <span class="idx">File 01</span>
+            <h3>Dữ liệu sinh hiệu</h3>
+            <p class="hint">Mỗi dòng 1 mã — chiều cao, cân nặng, mạch, huyết áp… (vd. Boo2k1.xlsx)</p>
+            <label class="drop" id="dropA">
+              <input type="file" id="fileA" accept=".xlsx,.xls,.csv">
+              <div class="cta"><b>Chọn file</b> hoặc kéo thả vào đây</div>
+            </label>
+            <div class="meta-line" id="metaA"></div>
+          </div>
+          <div class="card">
+            <span class="idx">File 02</span>
+            <h3>Chi tiết xét nghiệm</h3>
+            <p class="hint">Mỗi dòng 1 dịch vụ xét nghiệm — BARCODE, tên dịch vụ, kết quả… (vd. rptBC_CHITIET_XETNGHIEM)</p>
+            <label class="drop" id="dropB">
+              <input type="file" id="fileB" accept=".xlsx,.xls,.csv">
+              <div class="cta"><b>Chọn file</b> hoặc kéo thả vào đây</div>
+            </label>
+            <div class="meta-line" id="metaB"></div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="primary" id="btnProcess" disabled>
+            <span class="scan-line"><span></span><span></span><span></span><span></span></span>
+            Ghép dữ liệu theo Barcode
+          </button>
+          <button class="ghost" id="btnReset">Làm lại</button>
+          <button class="ghost" id="btnDownload" style="display:none;">⬇ Tải file Excel kết quả</button>
+        </div>
+
+        <div id="results" style="display:none;">
+          <div class="stats" id="stats"></div>
+
+          <div class="tabs">
+            <div class="tab active" data-tab="summary">Tổng hợp theo mã <span class="count" id="cSummary">0</span></div>
+            <div class="tab" data-tab="detail">Chi tiết xét nghiệm <span class="count" id="cDetail">0</span></div>
+          </div>
+
+          <div class="table-scroll" id="tableHost"></div>
+          <div class="legend">
+            <span><i class="dup"></i> Trùng lặp (barcode/dịch vụ lặp lại bất thường)</span>
+            <span><i class="mismatch"></i> Chỉ xuất hiện ở 1 trong 2 file</span>
+          </div>
+        </div>
+
+        <div id="emptyState" class="empty">Tải lên cả 2 file để bắt đầu ghép dữ liệu theo mã barcode.</div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- ============ MỤC 2: GHÉP THEO HỌ TÊN / NĂM SINH / GIỚI TÍNH ============ -->
+      <section class="block">
+        <div class="section-title"><span class="section-num">2</span><h2>Ghép theo Họ tên · Năm sinh · Giới tính</h2></div>
+        <p class="section-desc">Dùng khi 2 file không có chung mã barcode (ví dụ danh sách bệnh nhân từ hệ thống khác) — đối chiếu theo bộ 3: họ tên + năm sinh + giới tính. Các cột sinh hiệu được đẩy ra cuối bảng.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <span class="idx">File 01</span>
+            <h3>Kết quả đã ghép theo mã (Mục 1)</h3>
+            <p class="hint">File xuất ra từ Mục 1 (sheet "Tong hop theo ma") — có họ tên, năm sinh, giới tính, sinh hiệu, xét nghiệm.</p>
+            <label class="drop" id="dropC">
+              <input type="file" id="fileC" accept=".xlsx,.xls,.csv">
+              <div class="cta"><b>Chọn file</b> hoặc kéo thả vào đây</div>
+            </label>
+            <div class="meta-line" id="metaC"></div>
+          </div>
+          <div class="card">
+            <span class="idx">File 02</span>
+            <h3>Danh sách bệnh nhân</h3>
+            <p class="hint">File không có mã barcode chung — có họ tên, ngày sinh, giới tính và thông tin hành chính khác.</p>
+            <label class="drop" id="dropD">
+              <input type="file" id="fileD" accept=".xlsx,.xls,.csv">
+              <div class="cta"><b>Chọn file</b> hoặc kéo thả vào đây</div>
+            </label>
+            <div class="meta-line" id="metaD"></div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="primary" id="btnProcess2" disabled>
+            <span class="scan-line"><span></span><span></span><span></span><span></span></span>
+            Ghép theo Họ tên
+          </button>
+          <button class="ghost" id="btnReset2">Làm lại</button>
+          <button class="ghost" id="btnDownload2" style="display:none;">⬇ Tải file Excel kết quả</button>
+        </div>
+
+        <div id="results2" style="display:none;">
+          <div class="stats" id="stats2"></div>
+          <div class="table-scroll" id="tableHost2"></div>
+          <div class="col-note">Các cột sinh hiệu (chiều cao, cân nặng, mạch, huyết áp…) luôn được xếp ở cuối bảng.</div>
+          <div class="legend">
+            <span><i class="dup"></i> Trùng tên — nhiều người cùng họ tên/năm sinh/giới tính, cần kiểm tra tay</span>
+            <span><i class="mismatch"></i> Chỉ xuất hiện ở 1 trong 2 file</span>
+          </div>
+        </div>
+
+        <div id="emptyState2" class="empty">Tải lên cả 2 file để bắt đầu ghép theo họ tên / năm sinh / giới tính.</div>
+      </section>
+
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast">Đã lưu</div>
@@ -483,6 +719,561 @@ $('exportAllBtn').addEventListener('click', () => {
     sessionStorage.removeItem('adminAuth');
   }
 })();
+</script>
+
+<script>
+/* =====================================================================
+   CÔNG CỤ GHÉP DỮ LIỆU FILE (ported nguyên vẹn từ ghep-du-lieu-barcode.html)
+   ===================================================================== */
+
+/* ---------------- shared helpers ---------------- */
+const BARCODE_HEADER_RX = /^(m[aã]\s*code|barcode|m[aã]\s*bn|m[aã]\s*(kh[aá]ch\s*h[aà]ng)?|m[aã]\s*vi[eê]n)$/i;
+const SERVICE_HEADER_RX = /t[eê]n\s*d[iị]ch\s*v[uụ]/i;
+const RESULT_HEADER_RX = /k[eế]t\s*qu[aả]/i;
+const NAME_HEADER_RX = /h[oọ]\s*(v[àa]\s*)?t[êe]n|t[êe]n\s*b[ệe]nh\s*nh[âa]n/i;
+const GENDER_HEADER_RX = /gi[ớo]i\s*t[íi]nh/i;
+const DOB_FULL_RX = /ng[àa]y\s*sinh/i;
+const DOB_YEAR_RX = /n[ăa]m\s*sinh/i;
+const VITALS_RX = /chi[eề]u\s*cao|c[âa]n\s*n[ặa]ng|v[òo]ng\s*b[ụu]ng|m[ạa]ch\s*\(|nh[ịi]p\s*th[ởo]|ha\s*t[âa]m\s*thu|ha\s*t[âa]m\s*tr[ưu][ơo]ng|ng[àa]y\s*nh[ậa]p/i;
+const NUMBERING_RX = /^\(\d+\)$/;
+const DATE_HEADER_RX = /ng[àa]y/i;
+const BIRTHDATE_HEADER_RX = /ng[àa]y\s*sinh/i;
+
+function excelSerialToDate(serial){
+  const utcDays = Math.floor(serial - 25569);
+  const utcValue = utcDays*86400;
+  const dateInfo = new Date(utcValue*1000);
+  const fractionalDay = serial - Math.floor(serial) + 0.0000001;
+  let totalSeconds = Math.floor(86400 * fractionalDay);
+  const seconds = totalSeconds % 60;
+  totalSeconds -= seconds;
+  const hours = Math.floor(totalSeconds/3600);
+  const minutes = Math.floor(totalSeconds/60) % 60;
+  return new Date(Date.UTC(dateInfo.getUTCFullYear(), dateInfo.getUTCMonth(), dateInfo.getUTCDate(), hours, minutes, seconds));
+}
+function formatExcelDateValue(serial, isBirthDate){
+  const d = excelSerialToDate(serial);
+  const dd = String(d.getUTCDate()).padStart(2,'0');
+  const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+  const yyyy = d.getUTCFullYear();
+  let s = dd+'/'+mm+'/'+yyyy;
+  if(!isBirthDate){
+    const hh=d.getUTCHours(), mi=d.getUTCMinutes(), ss=d.getUTCSeconds();
+    if(hh||mi||ss) s += ' '+String(hh).padStart(2,'0')+':'+String(mi).padStart(2,'0')+':'+String(ss).padStart(2,'0');
+  }
+  return s;
+}
+
+function normHeader(v){ return (v===null||v===undefined) ? '' : String(v).trim(); }
+function normBarcode(v){
+  if(v===null||v===undefined) return '';
+  let s = String(v).trim();
+  if(/^\d+\.0$/.test(s)) s = s.slice(0,-2);
+  return s;
+}
+function normName(v){ return (v===null||v===undefined) ? '' : String(v).trim().toUpperCase().replace(/\s+/g,' '); }
+function normGender(v){ return (v===null||v===undefined) ? '' : String(v).trim().toUpperCase(); }
+function extractYear(value, isFullDate){
+  if(value===null||value===undefined||value==='') return '';
+  if(isFullDate){
+    if(typeof value === 'number'){
+      const utcDays = Math.floor(value - 25569);
+      const d = new Date(utcDays*86400*1000);
+      return String(d.getUTCFullYear());
+    }
+    const s = String(value).trim();
+    const m = s.match(/(\d{4})/g);
+    return m ? m[m.length-1] : '';
+  }
+  const s = String(value).trim();
+  const m = s.match(/(\d{4})/);
+  if(m) return m[1];
+  const n = Math.round(Number(s));
+  return (isFinite(n) && n>1900 && n<2100) ? String(n) : s;
+}
+function findKey(headers, rx){ return headers.find(h => rx.test(h)) || null; }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function pickSheet(wb, preferRx){
+  if(wb.SheetNames.length===1) return wb.Sheets[wb.SheetNames[0]];
+  const pref = preferRx ? wb.SheetNames.find(n=>preferRx.test(n)) : null;
+  return wb.Sheets[pref || wb.SheetNames[0]];
+}
+
+function isHtmlBuffer(buf){
+  const head = new TextDecoder('utf-8').decode(buf.slice(0, 1000)).toLowerCase();
+  return head.includes('<html') || head.includes('<table');
+}
+function htmlToAoa(buf){
+  const text = new TextDecoder('utf-8').decode(buf);
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  const table = doc.querySelector('table');
+  if(!table) return [];
+  const aoa = [];
+  table.querySelectorAll('tr').forEach(tr=>{
+    const row = [];
+    tr.querySelectorAll('td,th').forEach(td=>{
+      const t = td.textContent.replace(/\s+/g,' ').trim();
+      row.push(t===''? null : t);
+    });
+    if(row.length) aoa.push(row);
+  });
+  return aoa;
+}
+function workbookToAoa(wb, preferSheetRx){
+  const ws = pickSheet(wb, preferSheetRx);
+  return XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+}
+
+function parseAoa(aoa, detectRxList){
+  detectRxList = detectRxList || [BARCODE_HEADER_RX];
+
+  let headerRowIdx = -1;
+  for(let i=0;i<Math.min(10, aoa.length);i++){
+    const row = aoa[i] || [];
+    if(row.some(c => detectRxList.some(rx=>rx.test(normHeader(c))))){
+      headerRowIdx = i; break;
+    }
+  }
+  if(headerRowIdx === -1){
+    headerRowIdx = aoa.findIndex(r => r && r.some(c=>c!==null && String(c).trim()!==''));
+    if(headerRowIdx === -1) headerRowIdx = 0;
+  }
+
+  const headerRow = (aoa[headerRowIdx] || []).map(normHeader);
+
+  let dataStart = headerRowIdx + 1;
+  const nextRow = aoa[dataStart] || [];
+  const nonEmpty = nextRow.filter(c => c!==null && String(c).trim()!=='');
+  if(nonEmpty.length && nonEmpty.every(c => NUMBERING_RX.test(String(c).trim()))){
+    dataStart += 1;
+  }
+
+  const rows = [];
+  for(let i=dataStart;i<aoa.length;i++){
+    const r = aoa[i];
+    if(!r) continue;
+    const hasData = r.some(c => c!==null && String(c).trim()!=='');
+    if(!hasData) continue;
+    const obj = {};
+    headerRow.forEach((h,ci)=>{
+      if(!h) return;
+      let val = r[ci]===undefined ? null : r[ci];
+      if(typeof val === 'number' && DATE_HEADER_RX.test(h)){
+        val = formatExcelDateValue(val, BIRTHDATE_HEADER_RX.test(h));
+      }
+      obj[h] = val;
+    });
+    rows.push(obj);
+  }
+
+  return { headers: headerRow.filter(h=>h), rows };
+}
+
+function setupDrop(dropId, inputId, metaId, detectRxList, preferSheetRx, onLoaded){
+  const drop = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  const meta = document.getElementById(metaId);
+
+  function handleFile(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const data = new Uint8Array(e.target.result);
+        let aoa;
+        if(isHtmlBuffer(data)){
+          aoa = htmlToAoa(data);
+        } else {
+          const wb = XLSX.read(data, {type:'array', cellDates:false});
+          aoa = workbookToAoa(wb, preferSheetRx);
+        }
+        const parsed = parseAoa(aoa, detectRxList);
+        parsed.fileName = file.name;
+        drop.classList.add('has-file');
+        drop.querySelector('.cta').innerHTML = '<span class="fname">✓ '+file.name+'</span>';
+        meta.textContent = parsed.rows.length + ' dòng dữ liệu · ' + parsed.headers.length + ' cột';
+        onLoaded(parsed);
+      }catch(err){
+        meta.textContent = 'Lỗi đọc file: ' + err.message;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  input.addEventListener('change', ()=> handleFile(input.files[0]));
+  drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.style.borderColor='var(--teal)'; });
+  drop.addEventListener('dragleave', ()=>{ if(!drop.classList.contains('has-file')) drop.style.borderColor=''; });
+  drop.addEventListener('drop', e=>{
+    e.preventDefault();
+    if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+}
+
+/* =====================================================================
+   MỤC 1 — GHÉP THEO MÃ BARCODE
+   ===================================================================== */
+let rawA = null, rawB = null;
+let summaryRows = [], detailRows = [];
+
+setupDrop('dropA','fileA','metaA', [BARCODE_HEADER_RX], null, (p)=>{ rawA = p; checkReady1(); });
+setupDrop('dropB','fileB','metaB', [BARCODE_HEADER_RX], null, (p)=>{ rawB = p; checkReady1(); });
+
+function checkReady1(){
+  document.getElementById('btnProcess').disabled = !(rawA && rawB);
+}
+
+document.getElementById('btnReset').addEventListener('click', ()=> location.reload());
+document.getElementById('btnProcess').addEventListener('click', processFiles);
+
+function processFiles(){
+  let A = rawA, B = rawB;
+  const aIsDetail = A.headers.some(h=>SERVICE_HEADER_RX.test(h)) && A.headers.some(h=>RESULT_HEADER_RX.test(h));
+  const bIsDetail = B.headers.some(h=>SERVICE_HEADER_RX.test(h)) && B.headers.some(h=>RESULT_HEADER_RX.test(h));
+  let vitalsFile, detailFile;
+  if(bIsDetail && !aIsDetail){ vitalsFile = A; detailFile = B; }
+  else if(aIsDetail && !bIsDetail){ vitalsFile = B; detailFile = A; }
+  else { vitalsFile = A; detailFile = B; }
+
+  const vBarcodeKey = findKey(vitalsFile.headers, BARCODE_HEADER_RX);
+  const dBarcodeKey = findKey(detailFile.headers, BARCODE_HEADER_RX);
+  const serviceKey = findKey(detailFile.headers, SERVICE_HEADER_RX);
+  const resultKey = findKey(detailFile.headers, RESULT_HEADER_RX);
+
+  if(!vBarcodeKey || !dBarcodeKey){
+    alert('Không tìm thấy cột mã barcode ở một trong hai file. Vui lòng kiểm tra lại tiêu đề cột (Mã code / BARCODE).');
+    return;
+  }
+
+  const vitalsByCode = new Map();
+  vitalsFile.rows.forEach(r=>{
+    const code = normBarcode(r[vBarcodeKey]);
+    if(!code) return;
+    if(!vitalsByCode.has(code)) vitalsByCode.set(code, []);
+    vitalsByCode.get(code).push(r);
+  });
+
+  const detailByCode = new Map();
+  detailFile.rows.forEach(r=>{
+    const code = normBarcode(r[dBarcodeKey]);
+    if(!code) return;
+    if(!detailByCode.has(code)) detailByCode.set(code, []);
+    detailByCode.get(code).push(r);
+  });
+
+  detailByCode.forEach((rows)=>{
+    const seen = new Map();
+    rows.forEach(r=>{
+      const svc = serviceKey ? String(r[serviceKey]||'').trim().toLowerCase() : '';
+      seen.set(svc, (seen.get(svc)||0)+1);
+    });
+    rows.forEach(r=>{
+      const svc = serviceKey ? String(r[serviceKey]||'').trim().toLowerCase() : '';
+      r.__dupService = seen.get(svc) > 1;
+    });
+  });
+
+  const vitalsCols = vitalsFile.headers.filter(h=>h!==vBarcodeKey);
+  const patientInfoCols = detailFile.headers.filter(h=>
+    h!==dBarcodeKey && h!==serviceKey && h!==resultKey
+  );
+
+  const allCodes = new Set([...vitalsByCode.keys(), ...detailByCode.keys()]);
+
+  summaryRows = [];
+  allCodes.forEach(code=>{
+    const vRows = vitalsByCode.get(code) || [];
+    const dRows = detailByCode.get(code) || [];
+    const inV = vRows.length>0, inD = dRows.length>0;
+
+    let status, statusClass;
+    if(inV && inD){ status='Khớp cả 2 file'; statusClass='ok'; }
+    else if(inV && !inD){ status='Chỉ có ở File sinh hiệu'; statusClass='warn'; }
+    else { status='Chỉ có ở File xét nghiệm'; statusClass='warn'; }
+
+    const dupVitals = vRows.length > 1;
+    const dupServices = dRows.filter(r=>r.__dupService).length;
+
+    const row = { 'Mã Barcode': code };
+    vitalsCols.forEach(c => row[c] = inV ? vRows[0][c] : null);
+    patientInfoCols.forEach(c => row[c] = inD ? dRows[0][c] : null);
+    row['Số dịch vụ XN'] = dRows.length;
+    row['Danh sách dịch vụ / Kết quả'] = dRows.map(r=>{
+      const svc = serviceKey ? (r[serviceKey]||'') : '';
+      const res = resultKey ? (r[resultKey]||'') : '';
+      return res ? (svc+': '+res) : svc;
+    }).join('  |  ');
+    row['Trạng thái ghép'] = status;
+    row['Cảnh báo trùng'] = [
+      dupVitals ? ('Trùng '+vRows.length+' dòng sinh hiệu') : '',
+      dupServices ? (dupServices+' dịch vụ XN lặp lại') : ''
+    ].filter(Boolean).join(' · ') || '';
+
+    row.__statusClass = statusClass;
+    row.__isDup = dupVitals || dupServices>0;
+    summaryRows.push(row);
+  });
+  summaryRows.sort((a,b)=> String(a['Mã Barcode']).localeCompare(String(b['Mã Barcode']), 'vi', {numeric:true}));
+
+  detailRows = detailFile.rows.map(r=>{
+    const code = normBarcode(r[dBarcodeKey]);
+    const hasVitals = vitalsByCode.has(code);
+    const out = Object.assign({}, r);
+    delete out.__dupService;
+    detailFile.headers.forEach(h=>{ if(!(h in out)) out[h] = r[h]; });
+    out['__dup'] = !!r.__dupService;
+    out['__noVitals'] = !hasVitals;
+    out['Trùng dịch vụ?'] = r.__dupService ? 'Có' : 'Không';
+    out['Có sinh hiệu?'] = hasVitals ? 'Có' : 'Không';
+    return out;
+  });
+
+  renderResults(vitalsCols, patientInfoCols, detailFile.headers);
+}
+
+function renderResults(vitalsCols, patientInfoCols, detailHeaders){
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('btnDownload').style.display = 'inline-flex';
+
+  const matched = summaryRows.filter(r=>r.__statusClass==='ok').length;
+  const mismatched = summaryRows.length - matched;
+  const dupCount = summaryRows.filter(r=>r.__isDup).length;
+  const detailDupCount = detailRows.filter(r=>r.__dup).length;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="n">${summaryRows.length}</div><div class="l">Tổng mã barcode</div></div>
+    <div class="stat"><div class="n">${matched}</div><div class="l">Khớp cả 2 file</div></div>
+    <div class="stat warn"><div class="n">${mismatched}</div><div class="l">Chỉ có ở 1 file</div></div>
+    <div class="stat bad"><div class="n">${dupCount + detailDupCount}</div><div class="l">Dòng nghi trùng lặp</div></div>
+  `;
+
+  document.getElementById('cSummary').textContent = summaryRows.length;
+  document.getElementById('cDetail').textContent = detailRows.length;
+
+  const summaryCols = ['Mã Barcode', ...vitalsCols, ...patientInfoCols, 'Số dịch vụ XN', 'Danh sách dịch vụ / Kết quả', 'Trạng thái ghép', 'Cảnh báo trùng'];
+  const detailCols = [...detailHeaders, 'Trùng dịch vụ?', 'Có sinh hiệu?'];
+
+  window.__summaryCols = summaryCols;
+  window.__detailCols = detailCols;
+
+  drawTable('summary');
+
+  document.querySelectorAll('#results .tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('#results .tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      drawTable(t.dataset.tab);
+    });
+  });
+}
+
+function drawTable(which){
+  const host = document.getElementById('tableHost');
+  const cols = which==='summary' ? window.__summaryCols : window.__detailCols;
+  const data = which==='summary' ? summaryRows : detailRows;
+  host.innerHTML = renderTableHtml(cols, data, (row)=>{
+    if(which==='summary'){
+      if(row.__isDup) return 'dup';
+      if(row.__statusClass==='warn') return row['Trạng thái ghép'].includes('sinh hiệu') ? 'only-a' : 'only-b';
+      return '';
+    } else {
+      if(row.__dup) return 'dup';
+      if(row.__noVitals) return 'only-b';
+      return '';
+    }
+  }, 'Trạng thái ghép');
+}
+
+function renderTableHtml(cols, data, classifyRow, statusColName){
+  if(data.length===0) return '<div class="empty">Không có dữ liệu để hiển thị.</div>';
+  let html = '<table><thead><tr>';
+  cols.forEach(c=> html += '<th>'+escapeHtml(c)+'</th>');
+  html += '</tr></thead><tbody>';
+  data.forEach(row=>{
+    const trClass = classifyRow(row);
+    html += '<tr class="'+trClass+'">';
+    cols.forEach(c=>{
+      const isBarcode = /barcode|mã\s*code/i.test(c);
+      const val = row[c];
+      let display = (val===null||val===undefined) ? '' : String(val);
+      if(c===statusColName){
+        const cls = row.__statusClass==='ok' ? 'ok' : 'warn';
+        html += '<td><span class="badge '+cls+'">'+escapeHtml(display)+'</span></td>';
+        return;
+      }
+      html += '<td'+(isBarcode?' class="barcode"':'')+'>'+escapeHtml(display)+'</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+document.getElementById('btnDownload').addEventListener('click', ()=>{
+  const wb = XLSX.utils.book_new();
+
+  const sCols = window.__summaryCols;
+  const sAoa = [sCols, ...summaryRows.map(r=> sCols.map(c=> r[c]===undefined ? '' : r[c]))];
+  const wsSummary = XLSX.utils.aoa_to_sheet(sAoa);
+  wsSummary['!cols'] = sCols.map(c=> ({wch: Math.min(Math.max(c.length+2, 12), 45)}));
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Tong hop theo ma');
+
+  const dCols = window.__detailCols;
+  const dAoa = [dCols, ...detailRows.map(r=> dCols.map(c=> r[c]===undefined ? '' : r[c]))];
+  const wsDetail = XLSX.utils.aoa_to_sheet(dAoa);
+  wsDetail['!cols'] = dCols.map(c=> ({wch: Math.min(Math.max(c.length+2, 12), 45)}));
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Chi tiet xet nghiem');
+
+  const ts = new Date();
+  const stamp = ts.getFullYear()+String(ts.getMonth()+1).padStart(2,'0')+String(ts.getDate()).padStart(2,'0')+'_'+String(ts.getHours()).padStart(2,'0')+String(ts.getMinutes()).padStart(2,'0');
+  XLSX.writeFile(wb, 'Ghep_du_lieu_barcode_'+stamp+'.xlsx');
+});
+
+/* =====================================================================
+   MỤC 2 — GHÉP THEO HỌ TÊN / NĂM SINH / GIỚI TÍNH
+   ===================================================================== */
+let rawC = null, rawD = null;
+let mergedRows2 = [];
+
+const IDENTITY_RX_LIST = [NAME_HEADER_RX, GENDER_HEADER_RX, DOB_FULL_RX, DOB_YEAR_RX];
+
+setupDrop('dropC','fileC','metaC', IDENTITY_RX_LIST, /tong\s*hop|barcode/i, (p)=>{ rawC = p; checkReady2(); });
+setupDrop('dropD','fileD','metaD', IDENTITY_RX_LIST, null, (p)=>{ rawD = p; checkReady2(); });
+
+function checkReady2(){
+  document.getElementById('btnProcess2').disabled = !(rawC && rawD);
+}
+
+document.getElementById('btnReset2').addEventListener('click', ()=> location.reload());
+document.getElementById('btnProcess2').addEventListener('click', processFeature2);
+
+function identityKeys(headers){
+  const nameKey = findKey(headers, NAME_HEADER_RX);
+  const genderKey = findKey(headers, GENDER_HEADER_RX);
+  const dobFullKey = findKey(headers, DOB_FULL_RX);
+  const dobYearKey = findKey(headers, DOB_YEAR_RX);
+  const isFullDate = !!dobFullKey;
+  const dobKey = dobFullKey || dobYearKey;
+  return { nameKey, genderKey, dobKey, isFullDate };
+}
+
+function makeIdentityKey(row, ids){
+  const name = normName(row[ids.nameKey]);
+  const year = extractYear(row[ids.dobKey], ids.isFullDate);
+  const gender = normGender(row[ids.genderKey]);
+  if(!name || !year) return null;
+  return name+'|'+year+'|'+gender;
+}
+
+function processFeature2(){
+  let X = rawC, Y = rawD;
+  const xHasBarcode = X.headers.some(h=>/barcode/i.test(h));
+  const yHasBarcode = Y.headers.some(h=>/barcode/i.test(h));
+  let bcFile, regFile;
+  if(xHasBarcode && !yHasBarcode){ bcFile = X; regFile = Y; }
+  else if(yHasBarcode && !xHasBarcode){ bcFile = Y; regFile = X; }
+  else { bcFile = X; regFile = Y; }
+
+  const bcIds = identityKeys(bcFile.headers);
+  const regIds = identityKeys(regFile.headers);
+
+  if(!bcIds.nameKey || !bcIds.dobKey || !regIds.nameKey || !regIds.dobKey){
+    alert('Không tìm thấy đủ cột Họ tên / Năm sinh (hoặc Ngày sinh) ở một trong hai file. Vui lòng kiểm tra lại tiêu đề cột.');
+    return;
+  }
+
+  const bcByKey = new Map();
+  bcFile.rows.forEach(r=>{
+    const k = makeIdentityKey(r, bcIds);
+    if(!k) return;
+    if(!bcByKey.has(k)) bcByKey.set(k, []);
+    bcByKey.get(k).push(r);
+  });
+
+  const regByKey = new Map();
+  regFile.rows.forEach(r=>{
+    const k = makeIdentityKey(r, regIds);
+    if(!k) return;
+    if(!regByKey.has(k)) regByKey.set(k, []);
+    regByKey.get(k).push(r);
+  });
+
+  const vitalsCols = bcFile.headers.filter(h=>VITALS_RX.test(h));
+  const skipFromBc = new Set([bcIds.nameKey, bcIds.genderKey, bcIds.dobKey]);
+  const middleColsFromBc = bcFile.headers.filter(h=> !skipFromBc.has(h) && !vitalsCols.includes(h));
+
+  const finalCols = [...regFile.headers, ...middleColsFromBc, 'Trạng thái ghép tên', ...vitalsCols];
+
+  function buildRow(regRow, bcRow, status, cls){
+    const row = {};
+    regFile.headers.forEach(h=> row[h] = regRow ? (regRow[h]===undefined?null:regRow[h]) : null);
+    middleColsFromBc.forEach(h=> row[h] = bcRow ? (bcRow[h]===undefined?null:bcRow[h]) : null);
+    row['Trạng thái ghép tên'] = status;
+    vitalsCols.forEach(h=> row[h] = bcRow ? (bcRow[h]===undefined?null:bcRow[h]) : null);
+    row.__cls = cls;
+    return row;
+  }
+
+  const allKeys = new Set([...bcByKey.keys(), ...regByKey.keys()]);
+  let exact=0, onlyReg=0, onlyBc=0, ambiguousGroups=0;
+
+  mergedRows2 = [];
+  allKeys.forEach(k=>{
+    const bcRows = bcByKey.get(k) || [];
+    const regRows = regByKey.get(k) || [];
+
+    if(bcRows.length<=1 && regRows.length<=1){
+      let status, cls;
+      if(bcRows.length && regRows.length){ status='Khớp chính xác'; cls='ok'; exact++; }
+      else if(regRows.length){ status='Không có dữ liệu xét nghiệm'; cls='only-a'; onlyReg++; }
+      else { status='Không có trong danh sách bệnh nhân'; cls='only-b'; onlyBc++; }
+      mergedRows2.push(buildRow(regRows[0]||null, bcRows[0]||null, status, cls));
+    } else {
+      ambiguousGroups++;
+      const note = 'Trùng tên — cần kiểm tra tay ('+regRows.length+' người ở DS bệnh nhân, '+bcRows.length+' kết quả ghép theo mã)';
+      regRows.forEach(r=> mergedRows2.push(buildRow(r, null, note, 'dup')));
+      bcRows.forEach(r=> mergedRows2.push(buildRow(null, r, note, 'dup')));
+    }
+  });
+
+  const nameSortKey = regIds.nameKey;
+  mergedRows2.sort((a,b)=> String(a[nameSortKey]||'').localeCompare(String(b[nameSortKey]||''), 'vi'));
+
+  window.__cols2 = finalCols;
+  renderResults2({exact, onlyReg, onlyBc, ambiguousGroups, totalReg: regFile.rows.length});
+}
+
+function renderResults2(stats){
+  document.getElementById('emptyState2').style.display = 'none';
+  document.getElementById('results2').style.display = 'block';
+  document.getElementById('btnDownload2').style.display = 'inline-flex';
+
+  document.getElementById('stats2').innerHTML = `
+    <div class="stat"><div class="n">${stats.totalReg}</div><div class="l">Tổng người trong DS bệnh nhân</div></div>
+    <div class="stat"><div class="n">${stats.exact}</div><div class="l">Khớp chính xác</div></div>
+    <div class="stat warn"><div class="n">${stats.onlyReg + stats.onlyBc}</div><div class="l">Chỉ có ở 1 file</div></div>
+    <div class="stat bad"><div class="n">${stats.ambiguousGroups}</div><div class="l">Nhóm trùng tên cần kiểm tra</div></div>
+  `;
+
+  const host = document.getElementById('tableHost2');
+  host.innerHTML = renderTableHtml(window.__cols2, mergedRows2, (row)=> row.__cls || '', null);
+}
+
+document.getElementById('btnDownload2').addEventListener('click', ()=>{
+  const wb = XLSX.utils.book_new();
+  const cols = window.__cols2;
+  const aoa = [cols, ...mergedRows2.map(r=> cols.map(c=> r[c]===undefined ? '' : r[c]))];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = cols.map(c=> ({wch: Math.min(Math.max(c.length+2, 12), 45)}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Ghep theo ten');
+
+  const ts = new Date();
+  const stamp = ts.getFullYear()+String(ts.getMonth()+1).padStart(2,'0')+String(ts.getDate()).padStart(2,'0')+'_'+String(ts.getHours()).padStart(2,'0')+String(ts.getMinutes()).padStart(2,'0');
+  XLSX.writeFile(wb, 'Ghep_theo_ten_'+stamp+'.xlsx');
+});
 </script>
 
 </body>
