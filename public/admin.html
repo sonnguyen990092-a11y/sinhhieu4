@@ -113,6 +113,18 @@
   #exportBtn{background:var(--primary);color:#fff;}
   #refreshBtn{background:var(--card);color:var(--primary-dark);border:1.5px solid var(--line) !important;}
 
+  .day-tabs{
+    display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:thin;
+  }
+  .day-chip{
+    flex:0 0 auto;padding:8px 14px;border-radius:20px;border:1.5px solid var(--line);
+    background:#fff;font-size:13px;font-weight:600;color:var(--ink-soft);
+    cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;
+  }
+  .day-chip.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .day-chip .cnt{opacity:0.75;font-weight:500;margin-left:4px;}
+
   .search{
     width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;
     font-size:15px;font-family:'Inter',sans-serif;margin-bottom:14px;background:#fff;
@@ -190,6 +202,8 @@
       <button id="refreshBtn">Làm mới</button>
     </div>
 
+    <div class="day-tabs" id="dayTabs"></div>
+
     <input type="text" class="search" id="search" placeholder="Tìm theo mã code...">
 
     <div id="list"></div>
@@ -203,6 +217,7 @@ const $ = id => document.getElementById(id);
 const API = '/api/entries';
 let authHeader = '';
 let allEntries = [];
+let selectedDay = 'all';
 
 function showToast(msg){
   const t = $('toast');
@@ -215,6 +230,12 @@ function todayStr(){
   const d = new Date();
   const pad = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function formatDayLabel(d){
+  const parts = (d || '').split('-');
+  if(parts.length === 3) return `${parts[2]}/${parts[1]}`;
+  return d || 'Không rõ ngày';
 }
 
 async function tryLogin(username, password){
@@ -273,27 +294,46 @@ async function loadEntries(){
 function renderAll(){
   $('totalCount').textContent = allEntries.length;
   $('todayCount').textContent = allEntries.filter(e => e.date === todayStr()).length;
+  buildDayTabs();
   renderList($('search').value.trim());
+}
+
+function buildDayTabs(){
+  const days = [...new Set(allEntries.map(e => e.date).filter(Boolean))].sort().reverse();
+  if(selectedDay !== 'all' && !days.includes(selectedDay)) selectedDay = 'all';
+  const chips = [
+    `<button type="button" class="day-chip ${selectedDay==='all'?'active':''}" data-day="all">Tất cả<span class="cnt">${allEntries.length}</span></button>`
+  ].concat(days.map(d => {
+    const count = allEntries.filter(e => e.date === d).length;
+    return `<button type="button" class="day-chip ${selectedDay===d?'active':''}" data-day="${d}">${formatDayLabel(d)}<span class="cnt">${count}</span></button>`;
+  }));
+  $('dayTabs').innerHTML = chips.join('');
+  $('dayTabs').querySelectorAll('.day-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedDay = btn.dataset.day;
+      renderAll();
+    });
+  });
+  $('exportBtn').textContent = selectedDay === 'all' ? 'Xuất Excel (tất cả)' : `Xuất Excel (ngày ${formatDayLabel(selectedDay)})`;
 }
 
 function renderList(filter){
   const list = $('list');
   let entries = allEntries;
-  if(filter){
-    entries = entries.filter(e => (e.code || '').includes(filter));
-  }
+  if(selectedDay !== 'all') entries = entries.filter(e => e.date === selectedDay);
+  if(filter) entries = entries.filter(e => (e.code || '').includes(filter));
   if(entries.length === 0){
     list.innerHTML = '<div class="empty">Không có phiếu nào phù hợp.</div>';
     return;
   }
   list.innerHTML = entries.map(e => `
-    <div class="entry" data-key="${e.id}">
+    <div class="entry" data-key="${e.ts}">
       <div class="entry-top">
         <div>
           <span class="code">Mã ${e.code}</span>
           <span class="date"> · ${e.date ?? ''}</span>
         </div>
-        <button type="button" class="del" aria-label="Xóa" data-key="${e.id}">✕</button>
+        <button type="button" class="del" aria-label="Xóa" data-key="${e.ts}">✕</button>
       </div>
       <div class="entry-grid">
         <div><span>Chiều cao</span><b>${e.height ?? '–'} cm</b></div>
@@ -307,21 +347,16 @@ function renderList(filter){
       </div>
     </div>
   `).join('');
-
   list.querySelectorAll('.del').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!confirm('Xóa phiếu này?')) return;
       try{
-        const res = await fetch(API, {
+        const res = await fetch(`${API}?ts=${btn.dataset.key}`, {
           method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: authHeader
-          },
-          body: JSON.stringify({ id: btn.dataset.key })
+          headers: { Authorization: authHeader }
         });
         if(!res.ok) throw new Error('delete failed');
-        allEntries = allEntries.filter(e => e.id !== btn.dataset.key);
+        allEntries = allEntries.filter(e => String(e.ts) !== btn.dataset.key);
         renderAll();
         showToast('Đã xóa phiếu');
       }catch(e){
@@ -341,17 +376,20 @@ $('refreshBtn').addEventListener('click', async () => {
 
 $('exportBtn').addEventListener('click', () => {
   if(typeof XLSX === 'undefined'){ showToast('Không tải được thư viện Excel, thử lại'); return; }
-  if(allEntries.length === 0){ showToast('Chưa có dữ liệu để xuất'); return; }
+  let entries = allEntries;
+  if(selectedDay !== 'all') entries = entries.filter(e => e.date === selectedDay);
+  if(entries.length === 0){ showToast('Không có dữ liệu để xuất'); return; }
   const headers = ['Mã code','Ngày nhập','Chiều cao (cm)','Cân nặng hiện tại (kg)','Cân nặng 1 năm trước (kg)','Vòng bụng (cm)','Mạch (l/ph)','Nhịp thở (l/ph)','HA tâm thu (mmHg)','HA tâm trương (mmHg)'];
-  const rows = allEntries.map(e => [e.code, e.date ?? '', e.height, e.weightNow, e.weightPrev, e.waist, e.pulse, e.resp, e.bpSys, e.bpDia]);
+  const rows = entries.map(e => [e.code, e.date ?? '', e.height, e.weightNow, e.weightPrev, e.waist, e.pulse, e.resp, e.bpSys, e.bpDia]);
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   ws['!cols'] = headers.map(h => ({ wch: Math.max(12, h.length) }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Chi so');
-  XLSX.writeFile(wb, 'chi-so-suc-khoe.xlsx');
+  const filename = selectedDay === 'all' ? 'chi-so-suc-khoe-tat-ca.xlsx' : `chi-so-suc-khoe-${selectedDay}.xlsx`;
+  XLSX.writeFile(wb, filename);
 });
 
-// auto-login
+// auto-login if session already authenticated in this tab
 (async function init(){
   const saved = sessionStorage.getItem('adminAuth');
   if(saved){
