@@ -9,17 +9,6 @@ netlify.toml                  -> cấu hình build cho Netlify
 package.json + node_modules   -> thư viện @netlify/blobs đã cài sẵn
 ```
 
-`node_modules` đã được cài sẵn trong project này, nên bạn **không cần GitHub, không cần chạy lệnh gì** — chỉ cần kéo-thả cả thư mục lên Netlify.
-
-## Tài khoản quản trị (mặc định)
-- Trang quản trị: `<link-site-cua-ban>.netlify.app/admin.html`
-- Tài khoản: `admin`
-- Mật khẩu: `duc123`
-
-**Nên đổi mật khẩu trước khi dùng thật:** vào Netlify → site vừa deploy → **Site settings → Environment variables**, thêm 2 biến:
-- `ADMIN_USER` = tài khoản bạn muốn
-- `ADMIN_PASS` = mật khẩu bạn muốn
-
 Sau khi thêm biến môi trường, vào **Deploys → Trigger deploy → Deploy site** để function đọc giá trị mới (kéo-thả lại thư mục cũng được).
 
 ## Cách deploy — kéo thả trực tiếp (2 phút)
