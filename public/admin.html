@@ -125,6 +125,33 @@
   .day-chip.active{background:var(--primary);border-color:var(--primary);color:#fff;}
   .day-chip .cnt{opacity:0.75;font-weight:500;margin-left:4px;}
 
+  .export-card{margin-bottom:14px;}
+  .export-card .field{margin-bottom:12px;}
+  .export-card .field input{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;
+    font-size:15px;font-family:'Inter',sans-serif;color:var(--ink);background:#FBFCFB;
+  }
+  .export-card .field input:focus{outline:none;border-color:var(--primary);background:#fff;}
+  .export-buttons{display:flex;gap:10px;}
+  .export-buttons button{
+    flex:1;border-radius:12px;padding:11px;font-size:13.5px;font-weight:600;
+    font-family:'Space Grotesk',sans-serif;cursor:pointer;border:none;
+  }
+  #exportDayBtn{background:var(--primary);color:#fff;}
+  #exportAllBtn{background:var(--primary-tint);color:var(--primary-dark);}
+
+  .pagination{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    margin-top:16px;
+  }
+  .pagination button{
+    background:var(--card);border:1.5px solid var(--line);color:var(--primary-dark);
+    font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;
+    cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .pagination button:disabled{opacity:0.4;cursor:not-allowed;}
+  .pagination .page-info{font-size:13px;color:var(--ink-soft);font-weight:500;}
+
   .search{
     width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;
     font-size:15px;font-family:'Inter',sans-serif;margin-bottom:14px;background:#fff;
@@ -197,9 +224,20 @@
       <div class="stat"><div class="n" id="todayCount">0</div><div class="l">Nhập hôm nay</div></div>
     </div>
 
+    <div class="card export-card">
+      <p class="section-title">Xuất Excel</p>
+      <div class="field">
+        <label for="exportDate">Chọn ngày muốn xuất</label>
+        <input type="date" id="exportDate">
+      </div>
+      <div class="export-buttons">
+        <button type="button" id="exportDayBtn">Xuất theo ngày đã chọn</button>
+        <button type="button" id="exportAllBtn">Xuất tất cả</button>
+      </div>
+    </div>
+
     <div class="actions">
-      <button id="exportBtn">Xuất Excel</button>
-      <button id="refreshBtn">Làm mới</button>
+      <button id="refreshBtn" style="flex:1;">Làm mới danh sách</button>
     </div>
 
     <div class="day-tabs" id="dayTabs"></div>
@@ -207,6 +245,7 @@
     <input type="text" class="search" id="search" placeholder="Tìm theo mã code...">
 
     <div id="list"></div>
+    <div class="pagination" id="pagination"></div>
   </main>
 </div>
 
@@ -218,6 +257,8 @@ const API = '/api/entries';
 let authHeader = '';
 let allEntries = [];
 let selectedDay = 'all';
+let currentPage = 1;
+const PAGE_SIZE = 10;
 
 function showToast(msg){
   const t = $('toast');
@@ -311,10 +352,10 @@ function buildDayTabs(){
   $('dayTabs').querySelectorAll('.day-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedDay = btn.dataset.day;
+      currentPage = 1;
       renderAll();
     });
   });
-  $('exportBtn').textContent = selectedDay === 'all' ? 'Xuất Excel (tất cả)' : `Xuất Excel (ngày ${formatDayLabel(selectedDay)})`;
 }
 
 function renderList(filter){
@@ -322,10 +363,36 @@ function renderList(filter){
   let entries = allEntries;
   if(selectedDay !== 'all') entries = entries.filter(e => e.date === selectedDay);
   if(filter) entries = entries.filter(e => (e.code || '').includes(filter));
+
   if(entries.length === 0){
     list.innerHTML = '<div class="empty">Không có phiếu nào phù hợp.</div>';
+    $('pagination').innerHTML = '';
     return;
   }
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
+  if(currentPage > totalPages) currentPage = totalPages;
+  if(currentPage < 1) currentPage = 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageEntries = entries.slice(start, start + PAGE_SIZE);
+  renderPageEntries(list, pageEntries);
+  renderPagination(entries.length, totalPages);
+}
+
+function renderPagination(totalCount, totalPages){
+  const el = $('pagination');
+  if(totalPages <= 1){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button type="button" id="prevPageBtn" ${currentPage===1?'disabled':''}>‹ Trước</button>
+    <span class="page-info">Trang ${currentPage}/${totalPages} · ${totalCount} phiếu</span>
+    <button type="button" id="nextPageBtn" ${currentPage===totalPages?'disabled':''}>Sau ›</button>
+  `;
+  const prev = $('prevPageBtn'), next = $('nextPageBtn');
+  if(prev) prev.addEventListener('click', () => { currentPage--; renderList($('search').value.trim()); });
+  if(next) next.addEventListener('click', () => { currentPage++; renderList($('search').value.trim()); });
+}
+
+function renderPageEntries(list, entries){
   list.innerHTML = entries.map(e => `
     <div class="entry" data-key="${e.ts}">
       <div class="entry-top">
@@ -366,18 +433,17 @@ function renderList(filter){
   });
 }
 
-$('search').addEventListener('input', () => renderList($('search').value.trim()));
+$('search').addEventListener('input', () => { currentPage = 1; renderList($('search').value.trim()); });
 
 $('refreshBtn').addEventListener('click', async () => {
   allEntries = await loadEntries();
+  currentPage = 1;
   renderAll();
   showToast('Đã cập nhật danh sách');
 });
 
-$('exportBtn').addEventListener('click', () => {
+function exportToExcel(entries, filename){
   if(typeof XLSX === 'undefined'){ showToast('Không tải được thư viện Excel, thử lại'); return; }
-  let entries = allEntries;
-  if(selectedDay !== 'all') entries = entries.filter(e => e.date === selectedDay);
   if(entries.length === 0){ showToast('Không có dữ liệu để xuất'); return; }
   const headers = ['Mã code','Ngày nhập','Chiều cao (cm)','Cân nặng hiện tại (kg)','Cân nặng 1 năm trước (kg)','Vòng bụng (cm)','Mạch (l/ph)','Nhịp thở (l/ph)','HA tâm thu (mmHg)','HA tâm trương (mmHg)'];
   const rows = entries.map(e => [e.code, e.date ?? '', e.height, e.weightNow, e.weightPrev, e.waist, e.pulse, e.resp, e.bpSys, e.bpDia]);
@@ -385,8 +451,20 @@ $('exportBtn').addEventListener('click', () => {
   ws['!cols'] = headers.map(h => ({ wch: Math.max(12, h.length) }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Chi so');
-  const filename = selectedDay === 'all' ? 'chi-so-suc-khoe-tat-ca.xlsx' : `chi-so-suc-khoe-${selectedDay}.xlsx`;
   XLSX.writeFile(wb, filename);
+}
+
+$('exportDate').value = todayStr();
+
+$('exportDayBtn').addEventListener('click', () => {
+  const day = $('exportDate').value;
+  if(!day){ showToast('Vui lòng chọn ngày cần xuất'); return; }
+  const entries = allEntries.filter(e => e.date === day);
+  exportToExcel(entries, `chi-so-suc-khoe-${day}.xlsx`);
+});
+
+$('exportAllBtn').addEventListener('click', () => {
+  exportToExcel(allEntries, 'chi-so-suc-khoe-tat-ca.xlsx');
 });
 
 // auto-login if session already authenticated in this tab
